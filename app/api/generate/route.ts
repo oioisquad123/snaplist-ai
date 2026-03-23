@@ -4,27 +4,18 @@ import { getUsage, incrementUsage } from "@/lib/usage";
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
 const FREE_LIMIT = 3;
 
-const SYSTEM_PROMPT = `You are an expert eBay listing writer with 10+ years of experience selling on eBay. 
-Analyze the provided product photos carefully and generate an optimized eBay listing.
+const SYSTEM_PROMPT = `You are an expert eBay listing writer with 10+ years of experience. Analyze the product photos and return ONLY this exact JSON structure — no markdown, no extra text, no extra fields:
 
-Return ONLY valid JSON — no markdown, no explanation, just the raw JSON object.
+{"title":"string max 80 chars keyword-rich for eBay search","category":"specific eBay category","condition":"New","description":"<p>paragraph 1</p><p>paragraph 2</p>","suggestedPrice":0.00,"itemSpecifics":{"Brand":"","Size":"","Color":"","Material":"","Style":"","Department":""}}
 
-Use this exact schema:
-{
-  "title": "string — max 80 chars, keyword-rich for eBay search (include brand, model, size, color, key features)",
-  "category": "string — most specific eBay category name (e.g. 'Men's Athletic Shoes', 'Women's Handbags')",
-  "condition": "New" | "Like New" | "Good" | "Fair" | "Poor",
-  "description": "string — 2-3 paragraph HTML string with <p> tags. Include: what it is, key features, condition details, measurements if visible",
-  "suggestedPrice": number — fair market value in USD based on condition and item type,
-  "itemSpecifics": {
-    "Brand": "string or Unknown",
-    "Size": "string or N/A",
-    "Color": "string",
-    "Material": "string or N/A",
-    "Style": "string",
-    "Department": "Men | Women | Unisex | Boys | Girls | Baby | N/A"
-  }
-}`;
+Rules:
+- title: max 80 chars, include brand/model/size/color/key features
+- category: most specific eBay category (e.g. "Men's Athletic Shoes")
+- condition: ONLY one of: New, Like New, Good, Fair, Poor
+- description: 2-3 HTML paragraphs about the item, features, and condition
+- suggestedPrice: USD number (e.g. 29.99) — fair market value
+- itemSpecifics.Department: Men, Women, Unisex, Boys, Girls, Baby, or N/A
+- Use "Unknown" for Brand if not visible, "N/A" for other unknowns`;
 
 export async function POST(req: NextRequest) {
   try {
@@ -156,12 +147,41 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Normalize response to match expected frontend schema
+    // Gemini sometimes returns different field names — handle all variants
+    const normalized = {
+      title: parsed.title || parsed.listing_title || parsed.product_title || "Untitled Item",
+      category: parsed.category || parsed.ebay_category || parsed.product_category || "Other",
+      condition: parsed.condition || "Good",
+      description: parsed.description || parsed.product_description || parsed.item_description || "",
+      suggestedPrice: parsed.suggestedPrice ?? parsed.suggested_price ?? parsed.price ?? parsed.estimated_price ?? 0,
+      itemSpecifics: parsed.itemSpecifics || parsed.item_specifics || parsed.specifications || {
+        Brand: parsed.brand || "Unknown",
+        Size: parsed.size || "N/A",
+        Color: parsed.color || "N/A",
+        Material: parsed.material || "N/A",
+        Style: parsed.style || "N/A",
+        Department: parsed.department || "N/A",
+      },
+    };
+
+    // Ensure condition is one of our allowed values
+    const validConditions = ["New", "Like New", "Good", "Fair", "Poor"];
+    if (!validConditions.includes(normalized.condition)) {
+      normalized.condition = "Good";
+    }
+
+    // Truncate title to 80 chars
+    if (normalized.title.length > 80) {
+      normalized.title = normalized.title.substring(0, 80);
+    }
+
     // Increment usage after successful generation
     await incrementUsage(ip);
     const newUsage = await getUsage(ip);
 
     return NextResponse.json({
-      ...parsed,
+      ...normalized,
       usage: {
         used: newUsage.count,
         limit: isPro ? null : FREE_LIMIT,
