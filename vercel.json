@@ -2,17 +2,5 @@
   "framework": "nextjs",
   "buildCommand": "npm run build",
   "installCommand": "npm install",
-  "outputDirectory": ".next",
-  "env": {
-    "OPENROUTER_API_KEY": "@openrouter-api-key",
-    "SUPABASE_URL": "@supabase-url",
-    "SUPABASE_ANON_KEY": "@supabase-anon-key",
-    "SUPABASE_SERVICE_ROLE_KEY": "@supabase-service-role-key",
-    "STRIPE_SECRET_KEY": "@stripe-secret-key",
-    "NEXT_PUBLIC_STRIPE_KEY": "@stripe-publishable-key",
-    "STRIPE_PRICE_MONTHLY": "@stripe-price-monthly",
-    "STRIPE_PRICE_ANNUAL": "@stripe-price-annual",
-    "STRIPE_WEBHOOK_SECRET": "@stripe-webhook-secret",
-    "NEXT_PUBLIC_BASE_URL": "@next-public-base-url"
-  }
+  "outputDirectory": ".next"
 }
