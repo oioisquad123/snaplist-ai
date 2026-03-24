@@ -28,11 +28,13 @@ interface UsageInfo {
 
 const FUN_MESSAGES = [
   "AI is studying your photos... 🧐",
-  "Finding the best keywords for eBay search... 🔍",
+  "Finding the best keywords... 🔍",
   "Estimating fair market value... 💰",
   "Writing a killer description... ✍️",
   "Almost done — just polishing! ✨",
 ];
+
+type Platform = "ebay" | "poshmark";
 
 const CONDITIONS = ["New", "Like New", "Good", "Fair", "Poor"];
 
@@ -49,6 +51,7 @@ function GeneratePageInner() {
   const [usage, setUsage] = useState<UsageInfo | null>(null);
   const [copied, setCopied] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [platform, setPlatform] = useState<Platform>("ebay");
 
   // Load usage on mount
   useEffect(() => {
@@ -155,7 +158,26 @@ function GeneratePageInner() {
       .map(([k, v]) => `${k}: ${v}`)
       .join("\n");
 
-    const text = `TITLE: ${result.title}
+    let text: string;
+    if (platform === "poshmark") {
+      // Poshmark-optimized format
+      const dept = result.itemSpecifics?.Department || "";
+      const brand = result.itemSpecifics?.Brand || "Unknown";
+      const size = result.itemSpecifics?.Size || "See desc";
+      text = `${result.title}
+
+Brand: ${brand}
+Size: ${size}
+Condition: ${result.condition}
+${dept ? `Department: ${dept}` : ""}
+
+${result.description.replace(/<[^>]*>/g, "")}
+
+${specifics ? `Details:\n${specifics}` : ""}
+
+#${brand.replace(/\s/g, "")} #shoes #reseller #poshmark`;
+    } else {
+      text = `TITLE: ${result.title}
 
 CATEGORY: ${result.category}
 CONDITION: ${result.condition}
@@ -166,6 +188,7 @@ ${result.description.replace(/<[^>]*>/g, "")}
 
 ITEM SPECIFICS:
 ${specifics}`;
+    }
 
     navigator.clipboard.writeText(text).then(() => {
       setCopied(true);
@@ -173,13 +196,14 @@ ${specifics}`;
     });
   };
 
-  const openEbayForm = () => {
+  const openListingForm = () => {
     if (!result) return;
     const title = encodeURIComponent(result.title);
-    window.open(
-      `https://www.ebay.com/sell/list?title=${title}`,
-      "_blank"
-    );
+    if (platform === "poshmark") {
+      window.open("https://poshmark.com/create-listing", "_blank");
+    } else {
+      window.open(`https://www.ebay.com/sell/list?title=${title}`, "_blank");
+    }
   };
 
   const updateResult = (field: string, value: string | number) => {
@@ -237,8 +261,31 @@ ${specifics}`;
         )}
 
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-1">Generate eBay Listing</h1>
-          <p className="text-gray-600">Upload 1-4 photos → AI writes your listing in seconds</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-1">Generate Listing</h1>
+          <p className="text-gray-600 mb-4">Upload 1-4 photos → AI writes your listing in seconds</p>
+          {/* Platform toggle */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPlatform("ebay")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-all ${
+                platform === "ebay"
+                  ? "border-blue-600 bg-blue-50 text-blue-700"
+                  : "border-gray-200 text-gray-600 hover:border-gray-300"
+              }`}
+            >
+              🛒 eBay
+            </button>
+            <button
+              onClick={() => setPlatform("poshmark")}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 text-sm font-semibold transition-all ${
+                platform === "poshmark"
+                  ? "border-pink-500 bg-pink-50 text-pink-700"
+                  : "border-gray-200 text-gray-600 hover:border-gray-300"
+              }`}
+            >
+              👗 Poshmark
+            </button>
+          </div>
         </div>
 
         {/* Upload area */}
@@ -447,10 +494,14 @@ ${specifics}`;
                   {copied ? "✓ Copied!" : "📋 Copy All"}
                 </button>
                 <button
-                  onClick={openEbayForm}
-                  className="flex-1 border-2 border-blue-600 text-blue-600 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-colors"
+                  onClick={openListingForm}
+                  className={`flex-1 border-2 py-3 rounded-xl font-semibold transition-colors ${
+                    platform === "poshmark"
+                      ? "border-pink-500 text-pink-600 hover:bg-pink-50"
+                      : "border-blue-600 text-blue-600 hover:bg-blue-50"
+                  }`}
                 >
-                  🛍️ Open eBay
+                  {platform === "poshmark" ? "👗 Open Poshmark" : "🛒 Open eBay"}
                 </button>
               </div>
             </div>
