@@ -119,7 +119,7 @@ function GeneratePageInner() {
       const res = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ images }),
+        body: JSON.stringify({ images, platform }),
       });
 
       const data = await res.json();

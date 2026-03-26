@@ -4,23 +4,40 @@ import { getUsage, incrementUsage } from "@/lib/usage";
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || "";
 const FREE_LIMIT = 3;
 
-const SYSTEM_PROMPT = `You are an expert eBay listing writer with 10+ years of experience. Analyze the product photos and return ONLY this exact JSON structure — no markdown, no extra text, no extra fields:
+const EBAY_SYSTEM_PROMPT = `You are an expert eBay listing writer with 10+ years of reselling experience. Analyze the product photos carefully and return ONLY valid JSON — no markdown, no code blocks, no extra text.
 
-{"title":"string max 80 chars keyword-rich for eBay search","category":"specific eBay category","condition":"New","description":"<p>paragraph 1</p><p>paragraph 2</p>","suggestedPrice":0.00,"itemSpecifics":{"Brand":"","Size":"","Color":"","Material":"","Style":"","Department":""}}
+Required JSON structure:
+{"title":"","category":"","condition":"","description":"","suggestedPrice":29.99,"itemSpecifics":{"Brand":"","Size":"","Color":"","Material":"","Style":"","Department":""}}
 
-Rules:
-- title: max 80 chars, include brand/model/size/color/key features
-- category: most specific eBay category (e.g. "Men's Athletic Shoes")
-- condition: ONLY one of: New, Like New, Good, Fair, Poor
-- description: 2-3 HTML paragraphs about the item, features, and condition
-- suggestedPrice: USD number (e.g. 29.99) — fair market value
+CRITICAL RULES:
+- title: max 80 chars, keyword-rich for eBay search (include brand + model + color + size + key feature)
+- category: specific eBay category name — MUST be one of: "Men's Athletic Shoes", "Women's Athletic Shoes", "Men's Casual Shoes", "Women's Casual Shoes", "Men's Dress Shoes", "Women's Boots", "Children's Shoes", "Men's Sandals", "Women's Sandals", "Sneakers", "Running Shoes", "Basketball Shoes", "Clothing", "Men's T-Shirts", "Women's Dresses", "Handbags", "Watches", "Electronics", "Sports Equipment", "Collectibles", "Home & Garden", or similar specific category
+- condition: EXACTLY one of: New, Like New, Good, Fair, Poor
+- description: 2-3 paragraphs as HTML string with <p> tags — describe item, features, condition, measurements if visible
+- suggestedPrice: REQUIRED — estimate fair USD resale value based on brand, condition, style (e.g. 24.99, 49.99, 89.99) — NEVER return 0
 - itemSpecifics.Department: Men, Women, Unisex, Boys, Girls, Baby, or N/A
-- Use "Unknown" for Brand if not visible, "N/A" for other unknowns`;
+- itemSpecifics.Brand: visible brand name, or "Unknown" if not visible
+- All other specifics: fill in what you can see, use "N/A" if not determinable`;
+
+const POSHMARK_SYSTEM_PROMPT = `You are an expert Poshmark reseller with deep knowledge of fashion and secondhand marketplace pricing. Analyze the product photos and return ONLY valid JSON — no markdown, no code blocks, no extra text.
+
+Required JSON structure:
+{"title":"","category":"","condition":"","description":"","suggestedPrice":29.99,"itemSpecifics":{"Brand":"","Size":"","Color":"","Material":"","Style":"","Department":""}}
+
+CRITICAL RULES:
+- title: max 80 chars, include brand + style + color — optimize for Poshmark search
+- category: Poshmark category like "Women's Shoes", "Men's Shoes", "Women's Tops", "Men's Jackets", "Accessories", "Handbags", "Jewelry", etc.
+- condition: EXACTLY one of: New, Like New, Good, Fair, Poor
+- description: 2-3 paragraphs — mention brand, condition details, measurements, styling tips. No HTML tags (plain text).
+- suggestedPrice: REQUIRED — Poshmark fair value in USD. Factor in ~20% Poshmark fee. NEVER return 0.
+- itemSpecifics.Department: Men, Women, Unisex, Boys, Girls, Baby, or N/A
+- itemSpecifics.Brand: visible brand name, or "Unknown"
+- Fill all specifics you can determine from photos`;
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { images } = body;
+    const { images, platform = "ebay" } = body;
 
     if (!images || !Array.isArray(images) || images.length === 0) {
       return NextResponse.json(
@@ -44,8 +61,8 @@ export async function POST(req: NextRequest) {
 
     const usage = await getUsage(ip);
 
-    // Check if pro (via Stripe — simplified: check header for now)
-    const isPro = req.headers.get("x-snaplist-pro") === "true";
+    // Check if pro (via Supabase subscription lookup)
+    const isPro = await checkIfPro(ip, req);
 
     if (!isPro && usage.count >= FREE_LIMIT) {
       return NextResponse.json(
@@ -62,7 +79,6 @@ export async function POST(req: NextRequest) {
 
     // Build messages with vision
     const imageContent = images.map((img: string) => {
-      // Handle base64 data URLs
       const isDataUrl = img.startsWith("data:");
       if (isDataUrl) {
         const [header, data] = img.split(",");
@@ -79,6 +95,11 @@ export async function POST(req: NextRequest) {
         image_url: { url: img },
       };
     });
+
+    const systemPrompt = platform === "poshmark" ? POSHMARK_SYSTEM_PROMPT : EBAY_SYSTEM_PROMPT;
+    const userText = platform === "poshmark"
+      ? "Analyze these product photos and generate a Poshmark listing. Return ONLY valid JSON."
+      : "Analyze these product photos and generate an eBay listing. Return ONLY valid JSON.";
 
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
@@ -98,14 +119,14 @@ export async function POST(req: NextRequest) {
               content: [
                 {
                   type: "text",
-                  text: "Analyze these product photos and generate an eBay listing. Return ONLY valid JSON, no other text.",
+                  text: userText,
                 },
                 ...imageContent,
               ],
             },
           ],
-          system: SYSTEM_PROMPT,
-          temperature: 0.3,
+          system: systemPrompt,
+          temperature: 0.2,
           max_tokens: 1500,
         }),
       }
@@ -133,7 +154,10 @@ export async function POST(req: NextRequest) {
     // Parse JSON — strip markdown code blocks if present
     let parsed;
     try {
-      const cleaned = content
+      // Try to extract JSON from the response (handles extra text)
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      const jsonStr = jsonMatch ? jsonMatch[0] : content;
+      const cleaned = jsonStr
         .replace(/^```json\s*/i, "")
         .replace(/^```\s*/i, "")
         .replace(/```\s*$/i, "")
@@ -147,14 +171,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Normalize response to match expected frontend schema
-    // Gemini sometimes returns different field names — handle all variants
+    // Normalize response
     const normalized = {
-      title: parsed.title || parsed.listing_title || parsed.product_title || "Untitled Item",
-      category: parsed.category || parsed.ebay_category || parsed.product_category || "Other",
+      title: (parsed.title || parsed.listing_title || parsed.product_title || "Untitled Item").substring(0, 80),
+      category: parsed.category || parsed.ebay_category || parsed.product_category || "Clothing & Shoes",
       condition: parsed.condition || "Good",
       description: parsed.description || parsed.product_description || parsed.item_description || "",
-      suggestedPrice: parsed.suggestedPrice ?? parsed.suggested_price ?? parsed.price ?? parsed.estimated_price ?? 0,
+      suggestedPrice: (() => {
+        const raw = parsed.suggestedPrice ?? parsed.suggested_price ?? parsed.price ?? parsed.estimated_price ?? parsed.market_value ?? 0;
+        const num = typeof raw === "number" ? raw : parseFloat(raw);
+        // If AI returned 0, default to a reasonable minimum
+        return (isNaN(num) || num <= 0) ? 19.99 : num;
+      })(),
       itemSpecifics: parsed.itemSpecifics || parsed.item_specifics || parsed.specifications || {
         Brand: parsed.brand || "Unknown",
         Size: parsed.size || "N/A",
@@ -165,15 +193,15 @@ export async function POST(req: NextRequest) {
       },
     };
 
-    // Ensure condition is one of our allowed values
+    // Ensure condition is valid
     const validConditions = ["New", "Like New", "Good", "Fair", "Poor"];
     if (!validConditions.includes(normalized.condition)) {
       normalized.condition = "Good";
     }
 
-    // Truncate title to 80 chars
-    if (normalized.title.length > 80) {
-      normalized.title = normalized.title.substring(0, 80);
+    // Strip HTML from description for Poshmark
+    if (platform === "poshmark") {
+      normalized.description = normalized.description.replace(/<[^>]*>/g, "").trim();
     }
 
     // Increment usage after successful generation
@@ -182,6 +210,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       ...normalized,
+      platform,
       usage: {
         used: newUsage.count,
         limit: isPro ? null : FREE_LIMIT,
@@ -194,5 +223,32 @@ export async function POST(req: NextRequest) {
       { error: "Internal server error" },
       { status: 500 }
     );
+  }
+}
+
+// Check if the IP corresponds to a Pro subscriber
+async function checkIfPro(ip: string, req: NextRequest): Promise<boolean> {
+  // Check header (for future auth integration)
+  if (req.headers.get("x-snaplist-pro") === "true") return true;
+
+  const supabaseUrl = process.env.SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) return false;
+
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data } = await supabase
+      .from("snaplist_subscribers")
+      .select("status")
+      .eq("ip", ip)
+      .eq("status", "active")
+      .single();
+
+    return !!data;
+  } catch {
+    return false;
   }
 }
