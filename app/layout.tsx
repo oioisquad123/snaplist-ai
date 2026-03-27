@@ -7,20 +7,36 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "SnapList AI — Turn Photos Into eBay Listings in 10 Seconds",
   description:
-    "Upload 2-4 photos of any item and AI instantly generates a perfect eBay listing — title, description, price, category, and item specifics. Free for resellers.",
-  keywords: "eBay listing generator, AI listing tool, reseller tool, Poshmark listing, photo to listing",
+    "Upload 1-4 photos of any item. AI instantly generates title, description, price, category, and item specifics for eBay and Poshmark. Free to try — no signup.",
+  keywords: "eBay listing generator, AI listing tool, reseller tool, Poshmark listing, photo to listing, eBay seller tools, AI photo listing",
+  metadataBase: new URL("https://snaplist-ai-beta.vercel.app"),
   openGraph: {
-    title: "SnapList AI — Turn Photos Into eBay Listings in 10 Seconds",
-    description: "Stop spending 20 minutes writing eBay listings. SnapList AI does it in 10 seconds.",
-    url: "https://snaplistai.com",
+    title: "SnapList AI — Write Your eBay Listing in 10 Seconds",
+    description:
+      "Stop spending 20 minutes writing listings. Upload photos → AI writes title, description, price, category, item specifics instantly. eBay + Poshmark. Free to try.",
+    url: "https://snaplist-ai-beta.vercel.app",
     siteName: "SnapList AI",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "SnapList AI — Turn Photos Into eBay Listings",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "SnapList AI",
-    description: "Turn photos into perfect eBay listings in 10 seconds with AI.",
+    title: "SnapList AI — Write Your eBay Listing in 10 Seconds",
+    description:
+      "Upload photos → AI generates title, description, price, category. eBay + Poshmark. Free: 3/day. Pro: $9.99/mo.",
     creator: "@bhidaya1",
+    images: ["/og-image.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
   },
 };
 

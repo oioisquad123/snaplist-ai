@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
@@ -52,6 +52,12 @@ function GeneratePageInner() {
   const [copied, setCopied] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [platform, setPlatform] = useState<Platform>("ebay");
+  // Email capture modal
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [leadEmail, setLeadEmail] = useState("");
+  const [leadLoading, setLeadLoading] = useState(false);
+  const [leadDone, setLeadDone] = useState(false);
+  const emailInputRef = useRef<HTMLInputElement>(null);
 
   // Load usage on mount
   useEffect(() => {
@@ -126,9 +132,8 @@ function GeneratePageInner() {
 
       if (!res.ok) {
         if (res.status === 429) {
-          setError(
-            `You've used all ${data.limit} free listings today. Upgrade to Pro for unlimited!`
-          );
+          // Show email capture modal instead of plain error
+          setShowEmailModal(true);
         } else {
           setError(data.error || "Something went wrong. Please try again.");
         }
@@ -206,6 +211,35 @@ ${specifics}`;
     }
   };
 
+  const submitLeadEmail = async () => {
+    if (!leadEmail.includes("@")) return;
+    setLeadLoading(true);
+    try {
+      await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: leadEmail, source: "free_limit_wall", platform }),
+      });
+      setLeadDone(true);
+      // Redirect to checkout after 1.5s
+      setTimeout(() => {
+        window.location.href = "/checkout?plan=monthly";
+      }, 1500);
+    } catch {
+      // Still redirect even if API fails
+      window.location.href = "/checkout?plan=monthly";
+    } finally {
+      setLeadLoading(false);
+    }
+  };
+
+  // Focus email input when modal opens
+  useEffect(() => {
+    if (showEmailModal && emailInputRef.current) {
+      setTimeout(() => emailInputRef.current?.focus(), 100);
+    }
+  }, [showEmailModal]);
+
   const updateResult = (field: string, value: string | number) => {
     if (!result) return;
     setResult({ ...result, [field]: value });
@@ -221,6 +255,57 @@ ${specifics}`;
 
   return (
     <div className="min-h-screen bg-gray-50">
+
+      {/* Email Capture Modal — shown when free limit hit */}
+      {showEmailModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4" onClick={() => setShowEmailModal(false)}>
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            {!leadDone ? (
+              <>
+                <div className="text-4xl mb-3 text-center">🚀</div>
+                <h2 className="text-xl font-bold text-gray-900 text-center mb-1">You&apos;ve hit your free limit!</h2>
+                <p className="text-gray-600 text-center text-sm mb-6">
+                  3 listings/day free. Enter your email to unlock Pro — unlimited listings for $9.99/month.
+                </p>
+                <div className="space-y-3">
+                  <input
+                    ref={emailInputRef}
+                    type="email"
+                    placeholder="your@email.com"
+                    value={leadEmail}
+                    onChange={(e) => setLeadEmail(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && submitLeadEmail()}
+                    className="w-full border-2 border-gray-200 rounded-xl px-4 py-3 text-gray-900 focus:outline-none focus:border-blue-500 text-base"
+                  />
+                  <button
+                    onClick={submitLeadEmail}
+                    disabled={leadLoading || !leadEmail.includes("@")}
+                    className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold text-base hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                  >
+                    {leadLoading ? "Loading..." : "Get Pro — $9.99/mo →"}
+                  </button>
+                  <button
+                    onClick={() => setShowEmailModal(false)}
+                    className="w-full text-gray-400 text-sm py-2 hover:text-gray-600"
+                  >
+                    Not now (try again tomorrow)
+                  </button>
+                </div>
+                <div className="mt-4 bg-gray-50 rounded-xl p-3 text-xs text-gray-500 text-center">
+                  Pro = unlimited listings + eBay draft export (coming soon) + priority AI
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-4">
+                <div className="text-5xl mb-3">✅</div>
+                <h2 className="text-xl font-bold text-gray-900 mb-2">Got it!</h2>
+                <p className="text-gray-600 text-sm">Taking you to checkout...</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Nav */}
       <nav className="bg-white border-b border-gray-200 px-4 py-3">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
@@ -378,14 +463,6 @@ ${specifics}`;
         {error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
             <p className="text-red-700 text-sm">{error}</p>
-            {error.includes("free listings") && (
-              <Link
-                href="/checkout?plan=monthly"
-                className="inline-block mt-2 bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700"
-              >
-                Upgrade to Pro — $9.99/mo →
-              </Link>
-            )}
           </div>
         )}
 

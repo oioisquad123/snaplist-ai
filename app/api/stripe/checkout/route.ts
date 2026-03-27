@@ -5,7 +5,7 @@ const PRICES = {
   annual: process.env.STRIPE_PRICE_ANNUAL || "",
 };
 
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://snaplistai.com";
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://snaplist-ai-beta.vercel.app";
 
 export async function POST(req: NextRequest) {
   try {
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
       customer_email: email || undefined,
-      success_url: `${BASE_URL}/generate?upgraded=true`,
+      success_url: `${BASE_URL}/success`,
       cancel_url: `${BASE_URL}/#pricing`,
       metadata: { plan },
     });
