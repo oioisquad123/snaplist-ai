@@ -581,6 +581,17 @@ ${specifics}`;
                   {platform === "poshmark" ? "👗 Open Poshmark" : "🛒 Open eBay"}
                 </button>
               </div>
+              {/* Share button */}
+              <div className="pt-1">
+                <a
+                  href={`/share?title=${encodeURIComponent(result.title)}&price=${result.suggestedPrice}&category=${encodeURIComponent(result.category)}&condition=${encodeURIComponent(result.condition)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+                >
+                  🔗 Share this listing
+                </a>
+              </div>
             </div>
           </div>
         )}
