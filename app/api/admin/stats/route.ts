@@ -104,12 +104,20 @@ export async function GET(req: NextRequest) {
   const recentLeads = recentLeadsResult.status === "fulfilled" ? (recentLeadsResult.value.data ?? []) : [];
   const recentSubscribers = recentSubsResult.status === "fulfilled" ? (recentSubsResult.value.data ?? []) : [];
 
+  // Revenue estimate (monthly subscribers × $9.99, annual × $79/12 ≈ $6.58/mo)
+  const monthlyCount = recentSubscribers.filter((s: { plan: string }) => s.plan === "monthly").length;
+  const annualCount = recentSubscribers.filter((s: { plan: string }) => s.plan === "annual").length;
+  const estimatedMRR = (monthlyCount * 9.99) + (annualCount * 6.58);
+
   return NextResponse.json({
     totalUsers: uniqueIPs,
     totalGenerations,
     todayGenerations,
     totalLeads,
     totalSubscribers,
+    estimatedMRR: parseFloat(estimatedMRR.toFixed(2)),
+    monthlyCount,
+    annualCount,
     topIPs,
     recentLeads,
     recentSubscribers,

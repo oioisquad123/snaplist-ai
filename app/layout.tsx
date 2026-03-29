@@ -9,12 +9,12 @@ export const metadata: Metadata = {
   description:
     "Upload 1-4 photos of any item. AI instantly generates title, description, price, category, and item specifics for eBay and Poshmark. Free to try — no signup.",
   keywords: "eBay listing generator, AI listing tool, reseller tool, Poshmark listing, photo to listing, eBay seller tools, AI photo listing",
-  metadataBase: new URL("https://snaplist-ai-beta.vercel.app"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || "https://snaplist-ai-beta.vercel.app"),
   openGraph: {
     title: "SnapList AI — Write Your eBay Listing in 10 Seconds",
     description:
       "Stop spending 20 minutes writing listings. Upload photos → AI writes title, description, price, category, item specifics instantly. eBay + Poshmark. Free to try.",
-    url: "https://snaplist-ai-beta.vercel.app",
+    url: process.env.NEXT_PUBLIC_BASE_URL || "https://snaplist-ai-beta.vercel.app",
     siteName: "SnapList AI",
     type: "website",
     images: [

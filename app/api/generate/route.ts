@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
           "X-Title": "SnapList AI",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.0-flash-001",
+          model: "google/gemini-2.5-flash-preview",
           messages: [
             {
               role: "user",

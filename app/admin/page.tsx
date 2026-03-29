@@ -8,6 +8,9 @@ interface Stats {
   totalGenerations: number;
   totalLeads: number;
   totalSubscribers: number;
+  estimatedMRR?: number;
+  monthlyCount?: number;
+  annualCount?: number;
   todayGenerations: number;
   topIPs: Array<{ ip: string; count: number }>;
   recentLeads: Array<{ email: string; plan: string; status: string; created_at: string }>;
@@ -94,6 +97,20 @@ export default function AdminPage() {
               <div className="text-gray-400 text-sm">{m.label}</div>
             </div>
           ))}
+        </div>
+
+        {/* Revenue MRR card */}
+        <div className="bg-gradient-to-r from-green-900 to-green-800 rounded-xl p-6 border border-green-700 mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-green-300 text-sm font-medium mb-1">💰 Estimated MRR</div>
+              <div className="text-4xl font-bold text-white">${stats?.estimatedMRR?.toFixed(2) ?? "0.00"}</div>
+              <div className="text-green-400 text-sm mt-1">
+                {stats?.monthlyCount ?? 0} monthly + {stats?.annualCount ?? 0} annual subscribers
+              </div>
+            </div>
+            <div className="text-6xl">💵</div>
+          </div>
         </div>
 
         {/* Active subscribers */}

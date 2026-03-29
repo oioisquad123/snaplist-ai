@@ -314,6 +314,9 @@ ${specifics}`;
             <span className="font-bold text-gray-900">SnapList AI</span>
           </Link>
           <div className="flex items-center gap-3">
+            <Link href="/bulk" className="text-xs text-purple-600 hover:text-purple-800 font-medium hidden sm:block">
+              ⚡ Bulk Mode
+            </Link>
             {usage && !usage.isPro && (
               <span className="text-sm text-gray-500">
                 {usage.used}/{usage.limit ?? 3} free today

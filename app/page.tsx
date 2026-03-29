@@ -12,6 +12,7 @@ export default function Home() {
         <div className="flex items-center gap-4">
           <Link href="#how-it-works" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">How it works</Link>
           <Link href="#pricing" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">Pricing</Link>
+          <Link href="/bulk" className="text-purple-600 hover:text-purple-800 text-sm font-medium hidden sm:block">⚡ Bulk Mode</Link>
           <Link
             href="/generate"
             className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
