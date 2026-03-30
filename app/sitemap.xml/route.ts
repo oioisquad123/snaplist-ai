@@ -1,15 +1,28 @@
 export function GET() {
-  const baseUrl = "https://snaplistai.com";
-  const pages = ["/", "/generate", "/checkout", "/privacy", "/terms"];
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://snaplist-ai-beta.vercel.app";
+
+  const pages = [
+    { path: "/", priority: "1.0", freq: "weekly" },
+    { path: "/generate", priority: "0.9", freq: "weekly" },
+    { path: "/bulk", priority: "0.8", freq: "monthly" },
+    { path: "/checkout", priority: "0.7", freq: "monthly" },
+    { path: "/blog", priority: "0.8", freq: "weekly" },
+    { path: "/blog/how-to-write-ebay-listings-faster", priority: "0.8", freq: "monthly" },
+    { path: "/blog/ebay-title-formula", priority: "0.7", freq: "monthly" },
+    { path: "/blog/poshmark-listing-tips", priority: "0.7", freq: "monthly" },
+    { path: "/privacy", priority: "0.3", freq: "yearly" },
+    { path: "/terms", priority: "0.3", freq: "yearly" },
+  ];
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${pages
   .map(
     (page) => `  <url>
-    <loc>${baseUrl}${page}</loc>
-    <changefreq>${page === "/" ? "weekly" : "monthly"}</changefreq>
-    <priority>${page === "/" ? "1.0" : page === "/generate" ? "0.9" : "0.5"}</priority>
+    <loc>${baseUrl}${page.path}</loc>
+    <changefreq>${page.freq}</changefreq>
+    <priority>${page.priority}</priority>
+    <lastmod>${new Date().toISOString().split("T")[0]}</lastmod>
   </url>`
   )
   .join("\n")}
@@ -18,6 +31,7 @@ ${pages
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml",
+      "Cache-Control": "public, s-maxage=86400",
     },
   });
 }

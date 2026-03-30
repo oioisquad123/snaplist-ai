@@ -3,6 +3,27 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 
+async function exportToCSV(listings: ListingResult[]) {
+  try {
+    const res = await fetch("/api/export", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ listings, format: "ebay_csv" }),
+    });
+    if (!res.ok) throw new Error("Export failed");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `snaplist-ebay-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    alert("Export failed. Please try again.");
+    console.error(err);
+  }
+}
+
 interface ListingResult {
   title: string;
   category: string;
@@ -23,8 +44,6 @@ interface QueueItem {
   result?: ListingResult;
   error?: string;
 }
-
-const CONDITIONS = ["New", "Like New", "Good", "Fair", "Poor"];
 
 export default function BulkPage() {
   const [queue, setQueue] = useState<QueueItem[]>([]);
@@ -249,6 +268,20 @@ export default function BulkPage() {
               {errorCount > 0 && <span className="text-red-600">✗ {errorCount} errors</span>}
             </div>
             <div className="ml-auto flex gap-2">
+              {doneCount > 0 && (
+                <button
+                  onClick={() => {
+                    const doneResults = queue
+                      .filter((q) => q.status === "done" && q.result)
+                      .map((q) => q.result!);
+                    exportToCSV(doneResults);
+                  }}
+                  className="px-4 py-2 rounded-lg font-semibold text-sm border border-green-300 text-green-700 hover:bg-green-50 transition-colors"
+                  title="Download eBay File Exchange CSV"
+                >
+                  📥 Export eBay CSV ({doneCount})
+                </button>
+              )}
               <button
                 onClick={() => setQueue([])}
                 className="text-sm text-gray-500 hover:text-red-600 transition-colors"

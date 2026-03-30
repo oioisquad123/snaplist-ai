@@ -47,6 +47,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="manifest" href="/manifest.webmanifest" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="SnapList AI" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="theme-color" content="#2563eb" />
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
       <body className={inter.className}>{children}</body>
     </html>
   );
