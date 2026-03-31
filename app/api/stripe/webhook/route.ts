@@ -46,6 +46,7 @@ export async function POST(req: NextRequest) {
           const customerId = session.customer;
           const subscriptionId = session.subscription;
           const plan = session.metadata?.plan || "monthly";
+          const amountTotal = session.amount_total ? session.amount_total / 100 : null;
 
           if (email) {
             await supabase.from("snaplist_subscribers").upsert(
@@ -60,6 +61,26 @@ export async function POST(req: NextRequest) {
               { onConflict: "email" }
             );
             console.log(`✅ New subscriber: ${email} (${plan})`);
+
+            // Send Telegram notification to Bayu
+            try {
+              const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://snaplist-ai-beta.vercel.app";
+              await fetch(`${baseUrl}/api/notify`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-notify-key": process.env.NOTIFY_KEY || "snaplist-notify-2026",
+                },
+                body: JSON.stringify({
+                  type: "subscriber",
+                  email,
+                  plan,
+                  amount: amountTotal,
+                }),
+              });
+            } catch (notifyErr) {
+              console.warn("Notification failed (non-critical):", notifyErr);
+            }
           }
           break;
         }

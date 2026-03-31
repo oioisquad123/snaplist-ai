@@ -11,6 +11,17 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "how-to-price-items-on-ebay",
+    title: "How to Price Items on eBay in 2026 (The Exact Method a 6K Seller Uses)",
+    date: "March 31, 2026",
+    readTime: "6 min read",
+    excerpt:
+      "Stop guessing eBay prices. The exact 3-step method to price any item using sold comps — plus how AI can do it in seconds from just a photo. Includes quick-reference table by category.",
+    tags: ["eBay", "Pricing", "Strategy"],
+    emoji: "💰",
+    isNew: true,
+  },
+  {
     slug: "how-to-write-ebay-listings-faster",
     title: "How to Write eBay Listings 10x Faster (Without Cutting Corners)",
     date: "March 28, 2026",

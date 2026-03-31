@@ -8,7 +8,7 @@ export async function GET() {
   const checks = {
     status: "ok",
     timestamp: new Date().toISOString(),
-    version: "sprint-8",
+    version: "sprint-10",
     env: {
       openrouter: !!process.env.OPENROUTER_API_KEY,
       supabase: !!process.env.SUPABASE_URL,

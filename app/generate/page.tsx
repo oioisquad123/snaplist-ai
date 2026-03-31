@@ -203,11 +203,16 @@ ${specifics}`;
 
   const openListingForm = () => {
     if (!result) return;
-    const title = encodeURIComponent(result.title);
     if (platform === "poshmark") {
       window.open("https://poshmark.com/create-listing", "_blank");
     } else {
-      window.open(`https://www.ebay.com/sell/list?title=${title}`, "_blank");
+      // eBay Sell It Now deep link — pre-fills title in new listing form
+      const title = encodeURIComponent(result.title);
+      const params = new URLSearchParams({
+        Title: result.title,
+        // Pass price hint in the URL hash for reference
+      });
+      window.open(`https://www.ebay.com/sell/list?${params.toString()}`, "_blank");
     }
   };
 
@@ -584,15 +589,23 @@ ${specifics}`;
                   {platform === "poshmark" ? "👗 Open Poshmark" : "🛒 Open eBay"}
                 </button>
               </div>
-              {/* Share button */}
-              <div className="pt-1">
+              {/* Secondary actions */}
+              <div className="pt-1 grid grid-cols-2 gap-2">
+                <a
+                  href={`/price-check?q=${encodeURIComponent(result.title)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+                >
+                  💰 Check comps
+                </a>
                 <a
                   href={`/share?title=${encodeURIComponent(result.title)}&price=${result.suggestedPrice}&category=${encodeURIComponent(result.category)}&condition=${encodeURIComponent(result.condition)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-2 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors"
+                  className="flex items-center justify-center gap-1.5 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm hover:bg-gray-50 transition-colors"
                 >
-                  🔗 Share this listing
+                  🔗 Share listing
                 </a>
               </div>
             </div>
