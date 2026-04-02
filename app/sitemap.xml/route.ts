@@ -13,6 +13,9 @@ export function GET() {
     { path: "/blog/how-to-write-ebay-listings-faster", priority: "0.8", freq: "monthly" },
     { path: "/blog/ebay-title-formula", priority: "0.7", freq: "monthly" },
     { path: "/blog/poshmark-listing-tips", priority: "0.7", freq: "monthly" },
+    { path: "/blog/best-ai-tools-for-ebay-sellers", priority: "0.9", freq: "monthly" },
+    { path: "/blog/how-to-sell-on-poshmark-fast", priority: "0.85", freq: "monthly" },
+    { path: "/tools", priority: "0.85", freq: "monthly" },
     { path: "/privacy", priority: "0.3", freq: "yearly" },
     { path: "/terms", priority: "0.3", freq: "yearly" },
   ];

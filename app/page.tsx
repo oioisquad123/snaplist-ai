@@ -1,5 +1,6 @@
 import Link from "next/link";
 import LiveStats from "./components/LiveStats";
+import Testimonials from "./components/Testimonials";
 
 export default function Home() {
   return (
@@ -14,7 +15,7 @@ export default function Home() {
           <Link href="#how-it-works" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">How it works</Link>
           <Link href="#pricing" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">Pricing</Link>
           <Link href="/bulk" className="text-purple-600 hover:text-purple-800 text-sm font-medium hidden sm:block">⚡ Bulk Mode</Link>
-          <Link href="/price-check" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">💰 Price Check</Link>
+          <Link href="/tools" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">🛠️ Tools</Link>
           <Link href="/blog" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">Blog</Link>
           <Link
             href="/generate"
@@ -235,6 +236,9 @@ export default function Home() {
           If you list 10 items/week, that&apos;s <span className="font-bold text-gray-900">3+ hours saved every week</span>.
         </p>
       </section>
+
+      {/* Testimonials */}
+      <Testimonials />
 
       {/* Pricing */}
       <section id="pricing" className="bg-gray-50 border-y border-gray-100 py-20">

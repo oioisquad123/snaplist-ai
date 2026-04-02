@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
+import ListingHistory, { saveListingToHistory } from "@/app/components/ListingHistory";
 
 interface ListingResult {
   title: string;
@@ -141,6 +142,15 @@ function GeneratePageInner() {
       }
 
       setResult(data);
+      // Save to localStorage history
+      if (data.title) {
+        saveListingToHistory({
+          title: data.title,
+          suggestedPrice: data.suggestedPrice || 0,
+          condition: data.condition || "Unknown",
+          platform,
+        });
+      }
       if (data.usage) {
         setUsage({
           used: data.usage.used,
@@ -642,6 +652,9 @@ ${specifics}`;
             </Link>
           </div>
         )}
+
+        {/* Listing history */}
+        <ListingHistory />
       </div>
     </div>
   );

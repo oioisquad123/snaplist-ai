@@ -11,6 +11,28 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "best-ai-tools-for-ebay-sellers",
+    title: "Best AI Tools for eBay Sellers in 2026 (Ranked + Tested)",
+    date: "April 2, 2026",
+    readTime: "7 min read",
+    excerpt:
+      "I run a 6,000-feedback eBay store and tested every AI tool that promises to make reselling faster. Most are trash. A few are genuinely life-changing. Here's the honest ranked breakdown.",
+    tags: ["AI Tools", "eBay", "Review"],
+    emoji: "🤖",
+    isNew: true,
+  },
+  {
+    slug: "how-to-sell-on-poshmark-fast",
+    title: "How to Sell on Poshmark Fast in 2026 (7 Tricks That Actually Work)",
+    date: "April 2, 2026",
+    readTime: "6 min read",
+    excerpt:
+      "Built a closet to 183K followers on Poshmark. These are the 7 tactics that actually move items — not generic advice you've seen a hundred times. Includes the AI listing shortcut.",
+    tags: ["Poshmark", "Strategy", "2026"],
+    emoji: "👗",
+    isNew: true,
+  },
+  {
     slug: "how-to-price-items-on-ebay",
     title: "How to Price Items on eBay in 2026 (The Exact Method a 6K Seller Uses)",
     date: "March 31, 2026",
@@ -19,7 +41,6 @@ const posts = [
       "Stop guessing eBay prices. The exact 3-step method to price any item using sold comps — plus how AI can do it in seconds from just a photo. Includes quick-reference table by category.",
     tags: ["eBay", "Pricing", "Strategy"],
     emoji: "💰",
-    isNew: true,
   },
   {
     slug: "how-to-write-ebay-listings-faster",
