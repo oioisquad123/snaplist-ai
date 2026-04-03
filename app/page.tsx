@@ -15,6 +15,7 @@ export default function Home() {
           <Link href="#how-it-works" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">How it works</Link>
           <Link href="#pricing" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">Pricing</Link>
           <Link href="/bulk" className="text-purple-600 hover:text-purple-800 text-sm font-medium hidden sm:block">⚡ Bulk Mode</Link>
+          <Link href="/relist" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">🔄 Relist</Link>
           <Link href="/tools" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">🛠️ Tools</Link>
           <Link href="/blog" className="text-gray-600 hover:text-gray-900 text-sm hidden sm:block">Blog</Link>
           <Link

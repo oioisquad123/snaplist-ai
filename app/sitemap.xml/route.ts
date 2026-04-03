@@ -16,6 +16,9 @@ export function GET() {
     { path: "/blog/best-ai-tools-for-ebay-sellers", priority: "0.9", freq: "monthly" },
     { path: "/blog/how-to-sell-on-poshmark-fast", priority: "0.85", freq: "monthly" },
     { path: "/tools", priority: "0.85", freq: "monthly" },
+    { path: "/relist", priority: "0.85", freq: "monthly" },
+    { path: "/poshmark", priority: "0.9", freq: "monthly" },
+    { path: "/blog/poshmark-listing-generator-free", priority: "0.9", freq: "monthly" },
     { path: "/privacy", priority: "0.3", freq: "yearly" },
     { path: "/terms", priority: "0.3", freq: "yearly" },
   ];

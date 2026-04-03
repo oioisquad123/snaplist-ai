@@ -55,6 +55,17 @@ const tools = [
     free: "Always free",
   },
   {
+    href: "/relist",
+    emoji: "🔄",
+    name: "Relist Optimizer",
+    tagline: "Paste any listing URL → AI rewrites it better",
+    description: "Paste an eBay, Poshmark, or Amazon listing URL. AI scrapes the listing and rewrites it with a stronger title, better keywords, and improved description.",
+    cta: "Optimize Listing →",
+    badge: "New",
+    badgeColor: "bg-orange-100 text-orange-700",
+    free: "Free",
+  },
+  {
     href: "/blog",
     emoji: "📚",
     name: "Reseller Blog",

@@ -37,16 +37,20 @@ CRITICAL RULES:
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { images, platform = "ebay" } = body;
+    const { images, platform = "ebay", textContext, context } = body;
 
-    if (!images || !Array.isArray(images) || images.length === 0) {
+    // Allow text-only mode (for relist from URL without images)
+    const hasImages = images && Array.isArray(images) && images.length > 0 && images[0];
+    const hasTextContext = textContext && typeof textContext === "string" && textContext.trim().length > 10;
+
+    if (!hasImages && !hasTextContext) {
       return NextResponse.json(
-        { error: "No images provided" },
+        { error: "No images or text context provided" },
         { status: 400 }
       );
     }
 
-    if (images.length > 4) {
+    if (hasImages && images.length > 4) {
       return NextResponse.json(
         { error: "Maximum 4 images allowed" },
         { status: 400 }
@@ -77,29 +81,50 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Build messages with vision
-    const imageContent = images.map((img: string) => {
-      const isDataUrl = img.startsWith("data:");
-      if (isDataUrl) {
-        const [header, data] = img.split(",");
-        const mimeType = header.match(/data:([^;]+)/)?.[1] || "image/jpeg";
+    // Build messages with vision or text-only
+    const systemPrompt = platform === "poshmark" ? POSHMARK_SYSTEM_PROMPT : EBAY_SYSTEM_PROMPT;
+
+    let messageContent: unknown[];
+
+    if (hasImages) {
+      const imageContent = images.filter(Boolean).map((img: string) => {
+        const isDataUrl = img.startsWith("data:");
+        if (isDataUrl) {
+          const [header, data] = img.split(",");
+          const mimeType = header.match(/data:([^;]+)/)?.[1] || "image/jpeg";
+          return {
+            type: "image_url",
+            image_url: {
+              url: `data:${mimeType};base64,${data}`,
+            },
+          };
+        }
         return {
           type: "image_url",
-          image_url: {
-            url: `data:${mimeType};base64,${data}`,
-          },
+          image_url: { url: img },
         };
-      }
-      return {
-        type: "image_url",
-        image_url: { url: img },
-      };
-    });
+      });
 
-    const systemPrompt = platform === "poshmark" ? POSHMARK_SYSTEM_PROMPT : EBAY_SYSTEM_PROMPT;
-    const userText = platform === "poshmark"
-      ? "Analyze these product photos and generate a Poshmark listing. Return ONLY valid JSON."
-      : "Analyze these product photos and generate an eBay listing. Return ONLY valid JSON.";
+      const userText = platform === "poshmark"
+        ? "Analyze these product photos and generate a Poshmark listing. Return ONLY valid JSON."
+        : "Analyze these product photos and generate an eBay listing. Return ONLY valid JSON.";
+
+      const extraContext = context
+        ? `\n\nAdditional context from original listing:\nOriginal title: ${context.originalTitle || "N/A"}\nOriginal price: $${context.originalPrice || "unknown"}\nOriginal description: ${context.originalDescription || "N/A"}`
+        : "";
+
+      messageContent = [
+        { type: "text", text: userText + extraContext },
+        ...imageContent,
+      ];
+    } else {
+      // Text-only mode — for relist from URL
+      const userText = platform === "poshmark"
+        ? `Based on this product information, generate an optimized Poshmark listing. Return ONLY valid JSON.\n\nProduct info:\n${textContext}`
+        : `Based on this product information, generate an optimized eBay listing. Return ONLY valid JSON.\n\nProduct info:\n${textContext}`;
+
+      messageContent = [{ type: "text", text: userText }];
+    }
 
     const response = await fetch(
       "https://openrouter.ai/api/v1/chat/completions",
@@ -112,17 +137,11 @@ export async function POST(req: NextRequest) {
           "X-Title": "SnapList AI",
         },
         body: JSON.stringify({
-          model: "google/gemini-2.5-flash-preview",
+          model: hasImages ? "google/gemini-2.5-flash-preview" : "google/gemini-2.0-flash-001",
           messages: [
             {
               role: "user",
-              content: [
-                {
-                  type: "text",
-                  text: userText,
-                },
-                ...imageContent,
-              ],
+              content: messageContent,
             },
           ],
           system: systemPrompt,

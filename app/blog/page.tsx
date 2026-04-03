@@ -11,6 +11,17 @@ export const metadata: Metadata = {
 
 const posts = [
   {
+    slug: "poshmark-listing-generator-free",
+    title: "Free Poshmark Listing Generator (AI): Write Your Listing in 10 Seconds",
+    date: "April 3, 2026",
+    readTime: "5 min read",
+    excerpt:
+      "The best free Poshmark listing generator. Upload photos → AI writes your title, description, price estimate, and details in seconds. Includes step-by-step guide and Poshmark listing formula.",
+    tags: ["Poshmark", "AI Tools", "Free"],
+    emoji: "🛍️",
+    isNew: true,
+  },
+  {
     slug: "best-ai-tools-for-ebay-sellers",
     title: "Best AI Tools for eBay Sellers in 2026 (Ranked + Tested)",
     date: "April 2, 2026",

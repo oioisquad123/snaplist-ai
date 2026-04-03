@@ -332,6 +332,9 @@ ${specifics}`;
             <Link href="/bulk" className="text-xs text-purple-600 hover:text-purple-800 font-medium hidden sm:block">
               ⚡ Bulk Mode
             </Link>
+            <Link href="/relist" className="text-xs text-gray-600 hover:text-gray-900 font-medium hidden sm:block">
+              🔄 Relist
+            </Link>
             {usage && !usage.isPro && (
               <span className="text-sm text-gray-500">
                 {usage.used}/{usage.limit ?? 3} free today
