@@ -7,6 +7,13 @@ const PRICES = {
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || "https://snaplist-ai-beta.vercel.app";
 
+const COUPON_MAP: Record<string, { percent_off: number; name: string }> = {
+  POSHMARK20: { percent_off: 20, name: "Poshmark Community 20% Off" },
+  FLIPPROFIT: { percent_off: 25, name: "FlipProfit 25% Off" },
+  LAUNCH50: { percent_off: 50, name: "Launch Week 50% Off" },
+  RESELLER10: { percent_off: 10, name: "Reseller 10% Off" },
+};
+
 export async function POST(req: NextRequest) {
   try {
     const stripeKey = process.env.STRIPE_SECRET_KEY;
@@ -18,7 +25,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { plan, email } = await req.json();
+    const { plan, email, coupon } = await req.json();
 
     if (!plan || !(plan in PRICES)) {
       return NextResponse.json(
@@ -42,15 +49,56 @@ export async function POST(req: NextRequest) {
       apiVersion: "2026-02-25.clover",
     });
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      mode: "subscription",
-      line_items: [{ price: priceId, quantity: 1 }],
-      customer_email: email || undefined,
-      success_url: `${BASE_URL}/success`,
-      cancel_url: `${BASE_URL}/#pricing`,
-      metadata: { plan },
-    });
+    // Resolve Stripe coupon ID from promo code if provided
+    let stripeCouponId: string | undefined;
+    if (coupon) {
+      const couponKey = coupon.toUpperCase();
+      const couponDef = COUPON_MAP[couponKey];
+      if (couponDef) {
+        try {
+          try {
+            const existing = await stripe.coupons.retrieve(couponKey);
+            stripeCouponId = existing.id;
+          } catch {
+            const created = await stripe.coupons.create({
+              id: couponKey,
+              percent_off: couponDef.percent_off,
+              duration: "once",
+              name: couponDef.name,
+            });
+            stripeCouponId = created.id;
+          }
+        } catch (couponErr) {
+          console.warn("Coupon setup failed, proceeding without discount:", couponErr);
+        }
+      }
+    }
+
+    // Build session — two code paths to satisfy TypeScript discriminated union
+    let session;
+    if (stripeCouponId) {
+      session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        mode: "subscription",
+        line_items: [{ price: priceId, quantity: 1 }],
+        customer_email: email || undefined,
+        success_url: `${BASE_URL}/success`,
+        cancel_url: `${BASE_URL}/#pricing`,
+        metadata: { plan, coupon: coupon || "" },
+        discounts: [{ coupon: stripeCouponId }],
+      });
+    } else {
+      session = await stripe.checkout.sessions.create({
+        payment_method_types: ["card"],
+        mode: "subscription",
+        line_items: [{ price: priceId, quantity: 1 }],
+        customer_email: email || undefined,
+        success_url: `${BASE_URL}/success`,
+        cancel_url: `${BASE_URL}/#pricing`,
+        metadata: { plan, coupon: coupon || "" },
+        allow_promotion_codes: true,
+      });
+    }
 
     return NextResponse.json({ url: session.url });
   } catch (err) {

@@ -2,9 +2,73 @@ import Link from "next/link";
 import LiveStats from "./components/LiveStats";
 import Testimonials from "./components/Testimonials";
 
+// FAQ structured data for Google rich results
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is SnapList AI?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "SnapList AI is an AI-powered tool that turns your product photos into complete eBay and Poshmark listings in 10 seconds. Upload 1-4 photos and get a keyword-rich title, description, suggested price, category, and item specifics instantly."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is SnapList AI free to use?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes! SnapList AI is free to use with 3 listings per day. No signup or credit card required. Pro plan ($9.99/month or $79/year) gives you unlimited listings per day."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does SnapList AI work for Poshmark?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes! SnapList AI supports both eBay and Poshmark. When you choose Poshmark mode, the AI writes plain-text descriptions (no HTML), uses Poshmark-style pricing, and formats the listing for Poshmark's categories."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How accurate is the AI pricing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The AI estimates a fair resale value based on the brand, condition, style, and current market trends it was trained on. It's a starting point — we recommend checking eBay sold comps for final pricing using our free Price Checker tool."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What AI model does SnapList use?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "SnapList AI uses Google Gemini 2.5 Flash via OpenRouter, which excels at visual product recognition and writing optimized marketplace listings."
+      }
+    }
+  ]
+};
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-white">
+      {/* Structured data for SEO */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }}
+      />
+
+      {/* Launch promo banner */}
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-center py-2.5 px-4">
+        <p className="text-sm font-medium">
+          🚀 Launch Special — Use code <strong>LAUNCH50</strong> for 50% off Pro (ends April 14) &nbsp;
+          <Link href="/checkout?coupon=LAUNCH50&plan=monthly" className="underline hover:no-underline font-bold">
+            Claim offer →
+          </Link>
+        </p>
+      </div>
+
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 border-b border-gray-100 max-w-6xl mx-auto">
         <div className="flex items-center gap-2">

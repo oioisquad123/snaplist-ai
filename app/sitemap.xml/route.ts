@@ -19,6 +19,7 @@ export function GET() {
     { path: "/relist", priority: "0.85", freq: "monthly" },
     { path: "/poshmark", priority: "0.9", freq: "monthly" },
     { path: "/blog/poshmark-listing-generator-free", priority: "0.9", freq: "monthly" },
+    { path: "/blog/ai-ebay-listing-generator", priority: "1.0", freq: "monthly" },
     { path: "/privacy", priority: "0.3", freq: "yearly" },
     { path: "/terms", priority: "0.3", freq: "yearly" },
   ];

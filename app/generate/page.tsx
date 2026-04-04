@@ -59,6 +59,19 @@ function GeneratePageInner() {
   const [leadLoading, setLeadLoading] = useState(false);
   const [leadDone, setLeadDone] = useState(false);
   const emailInputRef = useRef<HTMLInputElement>(null);
+  // Viral tweet-for-free flow
+  const [tweetBonusUsed, setTweetBonusUsed] = useState(false);
+  const [showTweetBonus, setShowTweetBonus] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsMobile(/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent));
+    // Check if tweet bonus was already used today
+    const used = localStorage.getItem("snaplist_tweet_bonus");
+    if (used === new Date().toISOString().split("T")[0]) {
+      setTweetBonusUsed(true);
+    }
+  }, []);
 
   // Load usage on mount
   useEffect(() => {
@@ -224,6 +237,26 @@ ${specifics}`;
       });
       window.open(`https://www.ebay.com/sell/list?${params.toString()}`, "_blank");
     }
+  };
+
+  const handleTweetBonus = () => {
+    const tweetText = encodeURIComponent(
+      `I just used @SnapListAI to write my eBay listing in 10 seconds 🔥\n\nUpload a photo → AI writes the title, description, price + item specifics.\n\nFree: 3 listings/day\nPro: $9.99/mo\n\n👉 snaplist-ai-beta.vercel.app\n\n#eBay #reselling #AItools #Poshmark`
+    );
+    window.open(`https://twitter.com/intent/tweet?text=${tweetText}`, "_blank");
+    // Grant bonus after tweet window opens
+    setTimeout(() => {
+      localStorage.setItem("snaplist_tweet_bonus", new Date().toISOString().split("T")[0]);
+      setTweetBonusUsed(true);
+      setShowTweetBonus(false);
+      // Increment usage via API (gives +3 more)
+      fetch("/api/tweet-bonus", { method: "POST" }).catch(() => {});
+      setUsage((prev) => prev ? {
+        ...prev,
+        remaining: (prev.remaining ?? 0) + 3,
+        limit: (prev.limit ?? 3) + 3,
+      } : prev);
+    }, 2000);
   };
 
   const submitLeadEmail = async () => {
@@ -415,6 +448,15 @@ ${specifics}`;
               className="hidden"
               onChange={(e) => e.target.files && handleFiles(e.target.files)}
             />
+            {/* Mobile camera input — separate from gallery picker */}
+            <input
+              id="camera-input"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              className="hidden"
+              onChange={(e) => e.target.files && handleFiles(e.target.files)}
+            />
             {images.length === 0 ? (
               <>
                 <div className="text-5xl mb-3">📷</div>
@@ -424,6 +466,22 @@ ${specifics}`;
                 <p className="text-gray-500 text-sm">
                   Up to 4 images • JPG, PNG, HEIC • Multiple angles = better results
                 </p>
+                {isMobile && (
+                  <div className="flex gap-3 mt-4 justify-center" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); document.getElementById("camera-input")?.click(); }}
+                      className="flex items-center gap-1.5 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700"
+                    >
+                      📸 Take Photo
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); document.getElementById("file-input")?.click(); }}
+                      className="flex items-center gap-1.5 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-200"
+                    >
+                      🖼️ From Gallery
+                    </button>
+                  </div>
+                )}
               </>
             ) : (
               <p className="text-gray-600 text-sm">
@@ -647,12 +705,25 @@ ${specifics}`;
               {usage.remaining === 0 ? "🚫 You're out of free listings for today" : "⚠️ Only 1 free listing left today"}
             </p>
             <p className="text-blue-600 text-sm mb-3">Upgrade to Pro for unlimited listings — $9.99/month</p>
-            <Link
-              href="/checkout?plan=monthly"
-              className="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
-            >
-              Upgrade to Pro →
-            </Link>
+            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+              <Link
+                href="/checkout?plan=monthly"
+                className="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+              >
+                Upgrade to Pro →
+              </Link>
+              {!tweetBonusUsed && (
+                <button
+                  onClick={handleTweetBonus}
+                  className="inline-block bg-black text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-gray-900 transition-colors text-sm"
+                >
+                  🐦 Tweet for +3 free
+                </button>
+              )}
+            </div>
+            {!tweetBonusUsed && (
+              <p className="text-xs text-gray-500 mt-2">Share on Twitter/X → get 3 bonus listings today</p>
+            )}
           </div>
         )}
 
